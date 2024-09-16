@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/task")
 public class TaskController {
 
+    private static final String COMPLETION_MESSAGE = "Task %s ended successfully";
+
     private final TaskProcessorService taskProcessorService;
 
     public TaskController(TaskProcessorService taskProcessorService) {
@@ -21,12 +23,18 @@ public class TaskController {
     @PostMapping("/async")
     public ResponseEntity<String> processAsyncTask(@RequestBody Task task) {
         taskProcessorService.addTask(task);
-        return ResponseEntity.ok("Task %s ended successfully".formatted(task.getOrder()));
+        return ResponseEntity.ok(COMPLETION_MESSAGE.formatted(task.getOrder()));
     }
 
     @PostMapping("/sync")
-    public  ResponseEntity<String> processSyncTask(@RequestBody Task task) {
+    public ResponseEntity<String> processSyncTask(@RequestBody Task task) {
         taskProcessorService.submitAndWait(() -> taskProcessorService.processTask(task));
-        return ResponseEntity.ok("Task %s ended successfully".formatted(task.getOrder()));
+        return ResponseEntity.ok(COMPLETION_MESSAGE.formatted(task.getOrder()));
+    }
+
+    @PostMapping("/sync/duration")
+    public ResponseEntity<String> processSyncTaskWithDuration(@RequestBody Task task) {
+        taskProcessorService.submitAndWaitForDuration(() -> taskProcessorService.processTask(task));
+        return ResponseEntity.ok(COMPLETION_MESSAGE.formatted(task.getOrder()));
     }
 }

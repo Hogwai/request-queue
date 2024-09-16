@@ -8,4 +8,6 @@ public interface TaskProcessorService {
     void processTask(Task task);
 
     void submitAndWait(Runnable task);
+
+    void submitAndWaitForDuration(Runnable task);
 }

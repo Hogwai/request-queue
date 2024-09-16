@@ -7,8 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -53,9 +52,27 @@ public class TaskProcessorServiceImpl implements TaskProcessorService {
         try {
             task.run();
         } catch (Exception e) {
-            logger.error("Error while running task");
+            logger.error("Error while running task:", e);
         } finally {
             lock.unlock();
+        }
+    }
+
+    @Override
+    public void submitAndWaitForDuration(Runnable task) {
+        try {
+            if (lock.tryLock(5000, TimeUnit.MILLISECONDS)) {
+                try {
+                    task.run();
+                } finally {
+                    lock.unlock();
+                }
+            } else {
+                logger.warn("Can't acquire lock");
+            }
+        } catch (InterruptedException e) {
+            logger.info("Error while running sync task: ", e);
+            Thread.currentThread().interrupt();
         }
     }
 
